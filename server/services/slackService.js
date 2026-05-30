@@ -22,4 +22,27 @@ const getChannelMessages = async (channelName = 'github-issues', limit = 20) => 
     }));
 };
 
-module.exports = { getChannelMessages };
+const notifyIssueResolved = async (issueNumber, issueTitle, resolvedBy, channelName = 'github-issues') => {
+  const channelList = await slack.conversations.list({ limit: 100 });
+  const channel = channelList.channels.find(c => c.name === channelName);
+  if (!channel) throw new Error(`Channel #${channelName} not found`);
+
+  await slack.chat.postMessage({
+    channel: channel.id,
+    text: `✅ Issue #${issueNumber} resolved`,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `✅ *Issue #${issueNumber} has been resolved*\n*${issueTitle}*\n_Marked resolved by ${resolvedBy}_\n\nOther contributors — no need to work on this one.`
+        }
+      },
+      {
+        type: 'divider'
+      }
+    ]
+  });
+};
+
+module.exports = { getChannelMessages, notifyIssueResolved };

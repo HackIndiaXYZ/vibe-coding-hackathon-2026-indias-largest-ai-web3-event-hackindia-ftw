@@ -1,7 +1,8 @@
+
 const express = require('express');
 const router = express.Router();
 const { runQuery } = require('../services/coralService');
-const { getChannelMessages } = require('../services/slackService');
+const { getChannelMessages, notifyIssueResolved } = require('../services/slackService');
 const { analyzeSlackGithubLinks } = require('../services/groqService');
 const RunHistory = require('../models/RunHistory');
 
@@ -26,6 +27,16 @@ router.post('/', async (req, res) => {
     });
 
     res.json({ linked, sqlQuery: sql, messageCount: messages.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/resolve', async (req, res) => {
+  const { issueNumber, issueTitle, resolvedBy, channel } = req.body;
+  try {
+    await notifyIssueResolved(issueNumber, issueTitle, resolvedBy || 'a contributor', channel);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

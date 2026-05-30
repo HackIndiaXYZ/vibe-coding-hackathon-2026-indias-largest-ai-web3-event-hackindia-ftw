@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { triageIssues } from '../api'
+import axios from 'axios'
 
 const priorityColor = {
   high: 'bg-red-900 text-red-300',
@@ -25,6 +26,58 @@ function SkeletonCard() {
       </div>
       <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"/>
       <div className="h-3 bg-gray-800 rounded w-24"/>
+    </div>
+  )
+}
+
+function IssueCard({ issue, owner, repo }) {
+  const [resolved, setResolved] = useState(false)
+  const [resolving, setResolving] = useState(false)
+
+  const markResolved = async () => {
+    setResolving(true)
+    try {
+      await axios.post('/api/slack/resolve', {
+        issueNumber: issue.number,
+        issueTitle: issue.summary,
+        resolvedBy: `${owner}/${repo} maintainer`,
+        channel: 'github-issues'
+      })
+      setResolved(true)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  return (
+    <div className={`bg-gray-900 border rounded-lg p-4 transition-all ${resolved ? 'border-green-800 opacity-60' : 'border-gray-800'}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-gray-500 text-xs">#{issue.number}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor[issue.type] || typeColor.other}`}>
+              {issue.type}
+            </span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColor[issue.priority]}`}>
+              {issue.priority}
+            </span>
+            {resolved && <span className="text-xs text-green-400 ml-1">✓ notified on Slack</span>}
+          </div>
+          <p className="text-sm text-white">{issue.summary}</p>
+          <span className="text-xs text-gray-500 mt-1 inline-block">→ {issue.suggestedLabel}</span>
+        </div>
+        {!resolved && (
+          <button
+            onClick={markResolved}
+            disabled={resolving}
+            className="text-xs bg-green-900 hover:bg-green-800 text-green-300 px-3 py-1.5 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            {resolving ? 'Notifying...' : 'Mark resolved'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -74,23 +127,7 @@ export default function TriageBoard({ owner, repo, onSql }) {
         {loading
           ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i}/>)
           : issues.map(issue => (
-            <div key={issue.number} className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-gray-500 text-xs">#{issue.number}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor[issue.type] || typeColor.other}`}>
-                      {issue.type}
-                    </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColor[issue.priority]}`}>
-                      {issue.priority}
-                    </span>
-                  </div>
-                  <p className="text-sm text-white">{issue.summary}</p>
-                  <span className="text-xs text-gray-500 mt-1 inline-block">→ {issue.suggestedLabel}</span>
-                </div>
-              </div>
-            </div>
+            <IssueCard key={issue.number} issue={issue} owner={owner} repo={repo} />
           ))
         }
       </div>
