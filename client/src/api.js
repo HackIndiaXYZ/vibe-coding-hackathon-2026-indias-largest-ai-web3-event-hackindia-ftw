@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ timeout: 180000 })
+const api = axios.create({ timeout: 120000 })
 
 export const triageIssues = (owner, repo) =>
   api.post('/api/triage', { owner, repo })

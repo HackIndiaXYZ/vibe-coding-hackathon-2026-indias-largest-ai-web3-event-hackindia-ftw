@@ -5,6 +5,7 @@ import DuplicatesPanel from './components/DuplicatesPanel'
 import ReleaseNotes from './components/ReleaseNotes'
 import SqlLog from './components/SqlLog'
 import RunHistory from './components/RunHistory'
+import SlackInsights from './components/SlackInsights'
 
 const getSavedRepo = () => {
   try {
@@ -20,7 +21,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('triage')
   const [sqlLog, setSqlLog] = useState([])
 
-  const tabs = ['triage', 'duplicates', 'release-notes']
+  const tabs = ['triage', 'duplicates', 'release-notes', 'slack']
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -72,6 +73,7 @@ export default function App() {
         {activeTab === 'triage' && <TriageBoard owner={repo.owner} repo={repo.repo} onSql={q => setSqlLog(l => [...l, q])} />}
         {activeTab === 'duplicates' && <DuplicatesPanel owner={repo.owner} repo={repo.repo} onSql={q => setSqlLog(l => [...l, q])} />}
         {activeTab === 'release-notes' && <ReleaseNotes owner={repo.owner} repo={repo.repo} onSql={q => setSqlLog(l => [...l, q])} />}
+        {activeTab === 'slack' && <SlackInsights owner={repo.owner} repo={repo.repo} onSql={q => setSqlLog(l => [...l, q])} />}
         {activeTab === 'sql-log' && <SqlLog queries={sqlLog} />}
         {activeTab === 'history' && <RunHistory />}
       </div>

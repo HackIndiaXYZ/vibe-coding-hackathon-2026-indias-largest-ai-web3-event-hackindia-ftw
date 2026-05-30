@@ -66,4 +66,28 @@ Only include sections that have items. Be concise. Start directly with the markd
   return response.choices[0].message.content;
 };
 
-module.exports = { analyzeIssues, findDuplicates, generateReleaseNotes };
+const analyzeSlackGithubLinks = async (issues, messages) => {
+  const prompt = `You are an OSS maintainer assistant. Match these Slack messages to related GitHub issues.
+
+GitHub issues:
+${JSON.stringify(issues.map(i => ({ number: i.number, title: i.title })), null, 2)}
+
+Slack messages:
+${JSON.stringify(messages.map(m => ({ text: m.text, timestamp: m.timestamp })), null, 2)}
+
+Return a JSON array only. Each item: { issueNumber: number, issueTitle: string, slackMessage: string, relevance: "high"|"medium"|"low", reason: string }
+Only include matches where relevance is medium or high. If no matches found, return [].`;
+
+  const response = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.2,
+    max_tokens: 1000,
+  });
+
+  const text = response.choices[0].message.content;
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+};
+
+module.exports = { analyzeIssues, findDuplicates, generateReleaseNotes, analyzeSlackGithubLinks };

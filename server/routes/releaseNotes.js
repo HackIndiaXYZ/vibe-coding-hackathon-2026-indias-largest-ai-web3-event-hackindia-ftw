@@ -1,23 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { runQuery } = require('../services/coralService');
+const axios = require('axios');
 const { generateReleaseNotes } = require('../services/groqService');
 const RunHistory = require('../models/RunHistory');
 
 router.post('/', async (req, res) => {
   const { owner, repo } = req.body;
 
-  const sql = `SELECT number, title, body, merged_at, labels FROM github.pulls WHERE owner = '${owner}' AND repo = '${repo}' AND state = 'closed' ORDER BY number DESC LIMIT 10`;
-
   try {
-    const rawPRs = await runQuery(sql);
-    const trimmed = rawPRs.map(pr => ({
+    const response = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/pulls`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          Accept: 'application/vnd.github.v3+json'
+        },
+        params: { state: 'closed', per_page: 15, sort: 'updated', direction: 'desc' }
+      }
+    );
+
+    const rawPRs = response.data.map(pr => ({
       number: pr.number,
       title: pr.title,
-      body: pr.body ? pr.body.slice(0, 100) : '',
-      labels: pr.labels
+      body: pr.body ? pr.body.slice(0, 150) : '',
+      merged_at: pr.merged_at,
+      labels: pr.labels.map(l => l.name)
     }));
-    const notes = await generateReleaseNotes(trimmed);
+
+    const sql = `SELECT number, title, body, merged_at, labels FROM github.pulls WHERE owner = '${owner}' AND repo = '${repo}' AND state = 'closed' ORDER BY number DESC LIMIT 15`;
+
+    const notes = await generateReleaseNotes(rawPRs);
 
     await RunHistory.create({
       type: 'release-notes',

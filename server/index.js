@@ -13,7 +13,7 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use((req, res, next) => {
-  res.setTimeout(180000);
+  res.setTimeout(120000);
   next();
 });
 
@@ -25,6 +25,7 @@ app.use('/api/triage', require('./routes/triage'));
 app.use('/api/duplicates', require('./routes/duplicates'));
 app.use('/api/release-notes', require('./routes/releaseNotes'));
 app.use('/api/history', require('./routes/history'));
+app.use('/api/slack', require('./routes/slack'));
 
 // Health check
 app.get('/api/health', (req, res) => {
