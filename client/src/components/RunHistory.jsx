@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const typeColor = {
-  triage: 'bg-blue-900 text-blue-300',
-  duplicates: 'bg-yellow-900 text-yellow-300',
-  'release-notes': 'bg-purple-900 text-purple-300',
+const typeConfig = {
+  triage: { color: 'text-blue-400 bg-blue-950 border-blue-900', label: 'Triage' },
+  duplicates: { color: 'text-yellow-400 bg-yellow-950 border-yellow-900', label: 'Duplicates' },
+  'release-notes': { color: 'text-green-400 bg-green-950 border-green-900', label: 'Release notes' },
 }
 
 export default function RunHistory() {
@@ -18,37 +18,62 @@ export default function RunHistory() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return (
-    <div className="grid gap-3">
-      {Array(4).fill(0).map((_, i) => (
-        <div key={i} className="bg-gray-900 border border-gray-800 rounded-lg p-4 animate-pulse h-16"/>
-      ))}
-    </div>
-  )
-
-  if (runs.length === 0) return (
-    <div className="text-center text-gray-500 py-20">No runs yet — use triage, duplicates or release notes to see history here</div>
-  )
-
   return (
     <div>
-      <div className="mb-4">
-        <h2 className="text-lg font-medium">Run history</h2>
-        <p className="text-sm text-gray-400">All past agent runs stored in MongoDB</p>
+      <div className="mb-6">
+        <h2 className="text-lg font-medium text-white">Run history</h2>
+        <p className="text-sm text-gray-500 mt-0.5">All past agent runs stored in MongoDB Atlas</p>
       </div>
-      <div className="grid gap-3">
-        {runs.map(run => (
-          <div key={run._id} className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor[run.type]}`}>{run.type}</span>
-              <span className="text-sm text-white font-mono">{run.repo}</span>
-              <span className="text-xs text-gray-500 ml-auto">{new Date(run.createdAt).toLocaleString()}</span>
-              <span className="text-xs text-gray-400">{run.resultCount} results</span>
-            </div>
-            <pre className="text-xs text-gray-500 font-mono truncate">{run.sqlQuery}</pre>
-          </div>
-        ))}
-      </div>
+
+      {loading && (
+        <div className="space-y-2">
+          {Array(4).fill(0).map((_, i) => (
+            <div key={i} className="border border-gray-800 rounded-lg p-4 animate-pulse h-16" />
+          ))}
+        </div>
+      )}
+
+      {!loading && runs.length === 0 && (
+        <div className="border border-gray-800 rounded-lg p-16 text-center text-gray-600">
+          No runs yet — use triage, duplicates or release notes to see history here
+        </div>
+      )}
+
+      {!loading && runs.length > 0 && (
+        <div className="border border-gray-800 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-800 bg-gray-900/80">
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Repo</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Results</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Time</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">SQL query</th>
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map(run => {
+                const config = typeConfig[run.type] || { color: 'text-gray-400 bg-gray-800 border-gray-700', label: run.type }
+                return (
+                  <tr key={run._id} className="border-b border-gray-800/60 hover:bg-gray-900/40 transition-colors">
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-1 rounded border ${config.color}`}>{config.label}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-300 text-sm font-mono">{run.repo}</td>
+                    <td className="px-4 py-3 text-gray-400 text-sm">{run.resultCount}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                      {new Date(run.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 text-xs font-mono max-w-xs">
+                      <div className="truncate">{run.sqlQuery}</div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

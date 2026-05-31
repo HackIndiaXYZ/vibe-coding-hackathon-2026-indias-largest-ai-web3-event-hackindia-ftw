@@ -3,34 +3,33 @@ import { triageIssues } from '../api'
 import axios from 'axios'
 
 const priorityColor = {
-  high: 'bg-red-900 text-red-300',
-  medium: 'bg-yellow-900 text-yellow-300',
-  low: 'bg-green-900 text-green-300',
+  high: 'text-red-400 bg-red-950 border-red-900',
+  medium: 'text-yellow-400 bg-yellow-950 border-yellow-900',
+  low: 'text-green-400 bg-green-950 border-green-900',
 }
 
 const typeColor = {
-  bug: 'bg-red-800 text-red-200',
-  feature: 'bg-blue-800 text-blue-200',
-  docs: 'bg-purple-800 text-purple-200',
-  question: 'bg-orange-800 text-orange-200',
-  other: 'bg-gray-700 text-gray-300',
+  bug: 'text-red-300 bg-red-900/40',
+  feature: 'text-blue-300 bg-blue-900/40',
+  docs: 'text-purple-300 bg-purple-900/40',
+  question: 'text-orange-300 bg-orange-900/40',
+  other: 'text-gray-300 bg-gray-800',
 }
 
-function SkeletonCard() {
+function SkeletonRow() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 animate-pulse">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-3 w-8 bg-gray-700 rounded"/>
-        <div className="h-5 w-16 bg-gray-700 rounded-full"/>
-        <div className="h-5 w-14 bg-gray-700 rounded-full"/>
-      </div>
-      <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"/>
-      <div className="h-3 bg-gray-800 rounded w-24"/>
-    </div>
+    <tr className="border-b border-gray-800 animate-pulse">
+      <td className="px-4 py-3"><div className="h-4 w-12 bg-gray-800 rounded"/></td>
+      <td className="px-4 py-3"><div className="h-4 w-48 bg-gray-800 rounded"/></td>
+      <td className="px-4 py-3"><div className="h-5 w-16 bg-gray-800 rounded-full"/></td>
+      <td className="px-4 py-3"><div className="h-5 w-14 bg-gray-800 rounded-full"/></td>
+      <td className="px-4 py-3"><div className="h-4 w-20 bg-gray-800 rounded"/></td>
+      <td className="px-4 py-3"><div className="h-7 w-24 bg-gray-800 rounded"/></td>
+    </tr>
   )
 }
 
-function IssueCard({ issue, owner, repo }) {
+function IssueRow({ issue, owner, repo }) {
   const [resolved, setResolved] = useState(false)
   const [resolving, setResolving] = useState(false)
 
@@ -52,33 +51,36 @@ function IssueCard({ issue, owner, repo }) {
   }
 
   return (
-    <div className={`bg-gray-900 border rounded-lg p-4 transition-all ${resolved ? 'border-green-800 opacity-60' : 'border-gray-800'}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-gray-500 text-xs">#{issue.number}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${typeColor[issue.type] || typeColor.other}`}>
-              {issue.type}
-            </span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColor[issue.priority]}`}>
-              {issue.priority}
-            </span>
-            {resolved && <span className="text-xs text-green-400 ml-1">✓ notified on Slack</span>}
-          </div>
-          <p className="text-sm text-white">{issue.summary}</p>
-          <span className="text-xs text-gray-500 mt-1 inline-block">→ {issue.suggestedLabel}</span>
-        </div>
-        {!resolved && (
+    <tr className={`border-b border-gray-800/60 hover:bg-gray-900/60 transition-colors ${resolved ? 'opacity-40' : ''}`}>
+      <td className="px-4 py-3 text-gray-500 text-sm font-mono">#{issue.number}</td>
+      <td className="px-4 py-3 text-gray-200 text-sm max-w-xs">
+        <div className="truncate">{issue.summary}</div>
+      </td>
+      <td className="px-4 py-3">
+        <span className={`text-xs px-2 py-1 rounded-full ${typeColor[issue.type] || typeColor.other}`}>
+          {issue.type}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className={`text-xs px-2 py-1 rounded border ${priorityColor[issue.priority]}`}>
+          {issue.priority}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-gray-500 text-xs font-mono">{issue.suggestedLabel}</td>
+      <td className="px-4 py-3">
+        {resolved ? (
+          <span className="text-green-400 text-xs">✓ Slack notified</span>
+        ) : (
           <button
             onClick={markResolved}
             disabled={resolving}
-            className="text-xs bg-green-900 hover:bg-green-800 text-green-300 px-3 py-1.5 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
+            className="text-xs bg-gray-800 hover:bg-green-900 border border-gray-700 hover:border-green-700 text-gray-300 hover:text-green-300 px-3 py-1.5 rounded transition-all disabled:opacity-50"
           >
             {resolving ? 'Notifying...' : 'Mark resolved'}
           </button>
         )}
-      </div>
-    </div>
+      </td>
+    </tr>
   )
 }
 
@@ -105,8 +107,8 @@ export default function TriageBoard({ owner, repo, onSql }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-medium">Issue triage</h2>
-          <p className="text-sm text-gray-400">Classify and prioritize open issues using AI</p>
+          <h2 className="text-lg font-medium text-white">Issue triage</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Classify and prioritize open issues using AI</p>
         </div>
         <button
           onClick={run}
@@ -117,20 +119,38 @@ export default function TriageBoard({ owner, repo, onSql }) {
         </button>
       </div>
 
-      {error && <div className="bg-red-900/50 border border-red-700 rounded p-3 text-red-300 text-sm mb-4">{error}</div>}
+      {error && <div className="bg-red-950 border border-red-900 rounded-lg p-3 text-red-400 text-sm mb-4">{error}</div>}
 
       {!loading && issues.length === 0 && (
-        <div className="text-center text-gray-500 py-20">Click "Run triage" to analyze open issues</div>
+        <div className="border border-gray-800 rounded-lg p-16 text-center text-gray-600">
+          Click "Run triage" to analyze open issues
+        </div>
       )}
 
-      <div className="grid gap-3">
-        {loading
-          ? Array(5).fill(0).map((_, i) => <SkeletonCard key={i}/>)
-          : issues.map(issue => (
-            <IssueCard key={issue.number} issue={issue} owner={owner} repo={repo} />
-          ))
-        }
-      </div>
+      {(loading || issues.length > 0) && (
+        <div className="border border-gray-800 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-800 bg-gray-900/80">
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">#</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Issue</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Priority</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Label</th>
+                <th className="px-4 py-3 text-left text-xs text-gray-500 font-medium uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading
+                ? Array(5).fill(0).map((_, i) => <SkeletonRow key={i} />)
+                : issues.map(issue => (
+                  <IssueRow key={issue.number} issue={issue} owner={owner} repo={repo} />
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
